@@ -1,11 +1,10 @@
-# Projeto Além do Horizonte — Resumo Consolidado
+# Projeto Além do Horizonte
 
 ## 1. Identidade da equipe
 
 - **Nome da equipe:** Além do Horizonte
-- **Integrantes mencionados:** Marcus e Thay
-- **Grito de guerra:**  
-  **Quem vai além? Além do Horizonte! Qual é a missão? Economizar com inovação!**
+- **Integrantes mencionados:** Marcus, Thayná e Rafael
+
 
 ## 2. Contexto
 
