@@ -318,7 +318,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 (function(){
   var INFO={
     ok:{label:'Pode abrir',l1:'FREEZER LIBERADO',l2:'PODE ABRIR',red:false,hint:'Tudo certo. Pode abrir e repor à vontade.'},
-    rec:{label:'Mantenha fechado',l1:'MANTENHA FECHADO',l2:'RECUPERANDO',red:true,hint:'Vermelho aqui não quer dizer quebrado. O equipamento está voltando ao frio. Evite abrir por enquanto.'},
+    rec:{label:'Mantenha fechado',l1:'MANTENHA FECHADO',l2:'REFRIGERANDO',red:true,hint:'Vermelho aqui não quer dizer quebrado. O equipamento está voltando ao frio. Evite abrir por enquanto.'},
     crit:{label:'Veja agora',l1:'TEMP. CRITICA',l2:'VERIFIQUE AGORA',red:true,hint:'A temperatura está alta e não melhora. Peça para alguém olhar o equipamento agora.'},
     nosig:{label:'Veja agora',l1:'SENSOR SEM SINAL',l2:'VERIFIQUE AGORA',red:true,hint:'O aparelho que mede a temperatura parou de responder. Peça para alguém olhar o equipamento.'}
   };
@@ -377,7 +377,7 @@ button{font:inherit;color:inherit;cursor:pointer}
       '<div><small>Temperatura</small><b>'+(e.estado==='nosig'?'—':fmt(e.temp)+' °C')+'</b></div>'+
       '<div><small>Porta</small><b>'+(e.porta?'aberta':'fechada')+'</b></div>';
     var a='';
-        a+='<button class="btn" data-act="crit">Porta Aberta</button>';
+        a+='<button class="btn" data-act="porta">Porta Aberta</button>';
     a+='<button class="btn" data-act="crit">Temperatura alta</button>';
     a+='<button class="btn" data-act="nosig">Sensor sem sinal</button>';
     a+='<button class="btn" data-act="reset"'+(e.estado==='ok'?' disabled':'')+'>Voltar ao normal</button>';
