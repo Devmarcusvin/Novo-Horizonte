@@ -377,7 +377,6 @@ button{font:inherit;color:inherit;cursor:pointer}
       '<div><small>Temperatura</small><b>'+(e.estado==='nosig'?'—':fmt(e.temp)+' °C')+'</b></div>'+
       '<div><small>Porta</small><b>'+(e.porta?'aberta':'fechada')+'</b></div>';
     var a='';
-    a+='<button class="btn" data-act="porta">Abrir a porta</button>';
     a+='<button class="btn" data-act="crit">Temperatura alta</button>';
     a+='<button class="btn" data-act="nosig">Sensor sem sinal</button>';
     a+='<button class="btn" data-act="reset"'+(e.estado==='ok'?' disabled':'')+'>Voltar ao normal</button>';
