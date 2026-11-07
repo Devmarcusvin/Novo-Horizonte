@@ -1,0 +1,503 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>
+:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0}
+img{max-width:100%}
+[hidden]{display:none!important}
+</style>
+<title>PDS Regenera</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=DM+Sans:wght@400;500;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+/* Layout: barra de app escura com abas; faixa de título + ações; grade de "gadgets" (cartão com cabeçalho colorido): resumo em 4 números, equipamentos, semáforo, medidor, barras de consumo, ocorrências. Texto grande e simples. */
+:root{
+  --bg:#FFFFFF; --surface:#FFFFFF; --surface2:#F7F4EE; --ink:#241F1A; --muted:#645D54; --line:#E7E2D9;
+  --appbar:#FFFFFF; --head:#FFF0C7; --head-ink:#241F1A;
+  --sun:#F2622B; --sun2:#FFB020; --sun-ink:#B8400F;
+  --cold:#0E8FC7; --cold-soft:#DDF1FA;
+  --ok:#0F7455; --ok-soft:#DDF3EA;
+  --warn:#8A5700; --warn-soft:#FFF0CF;
+  --crit:#C81F33; --crit-soft:#FBE3E6;
+  --s4:#5B5148;
+  --lcd:#17140F; --lcd-ink:#7CF2B8;
+  --f-display:'Bricolage Grotesque','Trebuchet MS',system-ui,sans-serif;
+  --f-body:'DM Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --f-mono:'IBM Plex Mono',ui-monospace,Menlo,Consolas,monospace;
+  color-scheme:light;
+}
+:root[data-theme="dark"]{
+  --bg:#14110E; --surface:#1E1A16; --surface2:#2A251F; --ink:#F6F1EA; --muted:#BDB5A9; --line:#3A342C;
+  --appbar:#1E1A16; --head:#4A3A12; --head-ink:#FFE9A8;
+  --sun:#FF7A45; --sun2:#FFBE3D; --sun-ink:#FF9A6B;
+  --cold:#4CC3F2; --cold-soft:#0F2A3A;
+  --ok:#3DDC9A; --ok-soft:#0F2E26;
+  --warn:#FFC857; --warn-soft:#3A2A0A;
+  --crit:#FF6577; --crit-soft:#3A1520;
+  --s4:#CFC6BA;
+  --lcd:#0D0B08; --lcd-ink:#7CF2B8;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:17px;line-height:1.5;padding-block:0 40px}
+h1,h2,h3{font-family:var(--f-display);margin:0;text-wrap:balance;line-height:1.1}
+p{margin:0}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:3px solid var(--sun);outline-offset:2px}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.gut{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.in{max-width:1180px;margin:0 auto}
+
+/* barra de app */
+.appbar{background:var(--appbar);color:var(--ink);border-bottom:3px solid transparent;border-image:linear-gradient(90deg,#FFD23F,#FFB020 35%,#F2622B 75%,#D9480F) 1}
+.appbar .in{display:flex;flex-wrap:wrap;align-items:center;gap:6px 28px;min-height:64px}
+.brand{display:flex;align-items:center;gap:10px;padding-block:8px}
+.brand b{font-family:var(--f-display);font-size:22px;font-weight:800;letter-spacing:-.01em}
+.brand span{font-size:14px;color:var(--muted);padding-left:10px;border-left:1px solid var(--line)}
+.nav{display:flex;gap:2px;align-self:stretch;flex-wrap:wrap}
+.nav button{background:none;border:0;color:var(--muted);font-weight:700;font-size:16px;padding:0 16px;min-height:60px;position:relative}
+.nav button:hover{color:var(--ink)}
+.nav button[aria-selected="true"]{color:var(--ink)}
+.nav button[aria-selected="true"]::after{content:"";position:absolute;left:12px;right:12px;bottom:-3px;height:4px;border-radius:4px 4px 0 0;background:var(--sun2)}
+.right{margin-left:auto;display:flex;align-items:center;gap:14px}
+.tbtn{display:inline-flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);color:var(--ink);border-radius:999px;padding:8px 16px;font-size:15px;font-weight:700}
+.tbtn:hover{border-color:var(--ink)}
+.clock{font-size:14px;color:var(--muted);font-family:var(--f-mono)}
+
+/* título */
+.titlebar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px 16px;padding-block:26px 18px}
+.titlebar h1{font-size:34px;font-weight:800;letter-spacing:-.02em}
+.tools{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.chip{font-size:14px;font-weight:700;color:var(--warn);background:var(--warn-soft);padding:6px 14px;border-radius:999px}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:10px 16px;font-size:16px;font-weight:700;color:var(--ink)}
+.btn:hover{border-color:var(--ink)}
+.btn.pri{background:var(--sun);border-color:var(--sun);color:#241F1A}
+.btn.dark{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.btn[disabled]{opacity:.4;cursor:not-allowed}
+
+/* grade e gadgets */
+.board{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:16px}
+.g12{grid-column:span 12}.g5{grid-column:span 5}.g7{grid-column:span 7}.g8{grid-column:span 8}.g4{grid-column:span 4}.g6{grid-column:span 6}
+.gadget{background:var(--surface);border:1px solid var(--line);border-radius:6px;overflow:hidden;display:flex;flex-direction:column;min-width:0;box-shadow:0 1px 2px rgba(36,31,26,.07)}
+.gh{background:var(--head);color:var(--head-ink);font-weight:700;font-size:17px;padding:11px 18px;box-shadow:inset 5px 0 0 var(--sun);border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:10px}
+.gh small{font-weight:500;font-size:14px;color:var(--muted)}
+.gb{padding:18px;display:flex;flex-direction:column;gap:14px;flex:1;min-width:0}
+.gf{border-top:1px solid var(--line);padding:11px 18px;font-size:15px;color:var(--muted);display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.gf b{color:var(--ink)}
+.tag{display:inline-flex;font-size:13px;font-weight:700;padding:3px 11px;border-radius:999px;color:var(--muted);background:var(--surface2);width:fit-content}
+.tag.fato{color:var(--ok);background:var(--ok-soft)}
+.tag.hip{color:var(--warn);background:var(--warn-soft)}
+.tag.vist{color:var(--cold);background:var(--cold-soft)}
+.muted{color:var(--muted)}
+
+/* resumo (4 números) */
+.nums{display:grid;grid-template-columns:repeat(4,minmax(0,1fr))}
+.num{padding:8px 18px;display:flex;flex-direction:column;align-items:flex-start;gap:6px;border-left:1px solid var(--line);min-width:0}
+.num:first-child{border-left:0;padding-left:0}
+.num .lb{font-size:15px;color:var(--muted);font-weight:700}
+.num .v{font-family:var(--f-display);font-weight:800;font-size:46px;letter-spacing:-.025em;line-height:1}
+.num .v small{font-size:19px;font-weight:600;color:var(--muted);letter-spacing:0}
+.num .v.soft{font-size:22px;line-height:1.25;color:var(--muted);padding-block:10px 9px}
+.num .sub{font-size:15px;color:var(--muted)}
+.c-cold{color:var(--cold)} .c-ok{color:var(--ok)} .c-sun{color:var(--sun-ink)}
+
+/* equipamentos */
+.eqlist{display:flex;flex-direction:column;margin:-18px;flex:1}
+.eqrow{display:grid;grid-template-columns:1fr auto;gap:2px 12px;text-align:left;padding:14px 18px;border:0;border-top:1px solid var(--line);background:var(--surface);border-left:5px solid transparent;align-items:center}
+.eqrow:first-child{border-top:0}
+.eqrow[aria-pressed="true"]{background:var(--surface2);border-left-color:var(--sun)}
+.eqrow .n{font-size:18px;font-weight:700}
+.eqrow .s{font-size:15px;font-weight:700;grid-column:1}
+.eqrow .t{grid-row:1 / span 2;grid-column:2;font-family:var(--f-display);font-weight:800;font-size:34px;letter-spacing:-.02em}
+.eqrow .t u{text-decoration:none;font-size:16px;color:var(--muted);font-weight:500}
+.eqrow.s-ok .s{color:var(--ok)}
+.eqrow.s-rec .s,.eqrow.s-crit .s,.eqrow.s-nosig .s{color:var(--crit)}
+
+/* detalhe */
+.pname{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.pname h3{font-size:25px}
+.pill{font-size:15px;font-weight:700;padding:5px 14px;border-radius:999px}
+.pill.ok{background:var(--ok-soft);color:var(--ok)}
+.pill.bad{background:var(--crit-soft);color:var(--crit)}
+.sema{display:flex;gap:12px}
+.light{width:68px;flex:none;border-radius:12px;background:var(--surface2);border:1px solid var(--line);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:12px 0}
+.light b{width:26px;height:26px;border-radius:50%;background:var(--line);display:block}
+.light.g b:nth-child(2){background:var(--ok);box-shadow:0 0 0 5px var(--ok-soft)}
+.light.r b:nth-child(1){background:var(--crit);box-shadow:0 0 0 5px var(--crit-soft)}
+.lcd{flex:1;min-width:0;background:var(--ok-soft);color:var(--ok);border-radius:10px;padding:14px 16px;font-family:var(--f-mono);font-weight:600;font-size:19px;line-height:1.45;letter-spacing:.02em;display:flex;flex-direction:column;justify-content:center}
+.lcd.r{background:var(--crit-soft);color:var(--crit)}
+.hint{font-size:16.5px}
+.stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.stats div{background:var(--surface);padding:10px 14px}
+.stats small{display:block;font-size:14px;color:var(--muted)}
+.stats b{font-family:var(--f-mono);font-weight:600;font-size:19px}
+.demo .lab{font-size:14px;color:var(--muted);font-weight:700;margin-bottom:8px;display:block}
+.actions{display:flex;flex-wrap:wrap;gap:8px}
+.actions .btn{padding:9px 12px;font-size:15px}
+
+/* medidor / rosca */
+.gauge{width:100%;max-width:300px;margin:0 auto;display:block}
+.gauge .trk,.donut .trk{fill:none;stroke:var(--surface2);stroke-width:22}
+.gauge .val,.donut .val{fill:none;stroke-width:22;stroke-linecap:butt}
+.gauge text,.donut text{text-anchor:middle;fill:var(--ink)}
+.badge{align-self:center;font-size:14px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:4px 14px;border-radius:4px;border:1.5px solid currentColor}
+
+/* gráfico de barras */
+.chart{width:100%;height:auto;display:block}
+.chart .ax{fill:var(--muted);font-family:var(--f-body);font-size:16px}
+.chart .gl{stroke:var(--line);stroke-width:1}
+.legend{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:15px;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:7px}
+.legend i{width:14px;height:14px;border-radius:3px;display:inline-block}
+
+
+/* tabela */
+.tbl-wrap{overflow-x:auto;margin:-4px -18px}
+.tbl{width:100%;min-width:700px;border-collapse:collapse;font-size:17px}
+.tbl th{text-align:left;font-size:14px;font-weight:700;color:var(--muted);padding:8px 18px;border-bottom:2px solid var(--line);white-space:nowrap}
+.tbl td{padding:13px 18px;border-bottom:1px solid var(--line);white-space:nowrap}
+.tbl th.r,.tbl td.r{text-align:right}
+.tbl tbody tr:hover{background:var(--surface2)}
+.tbl .num-c{font-family:var(--f-mono);font-variant-numeric:tabular-nums;font-weight:600}
+.tbl .m{font-weight:700}
+.tbl .inl{display:flex;align-items:center;gap:12px;justify-content:flex-end}
+.tbl .inl i{display:block;height:10px;border-radius:99px;background:linear-gradient(90deg,var(--sun2),var(--sun))}
+.tbl .up{color:var(--crit);font-weight:700}
+.tbl .dn{color:var(--ok);font-weight:700}
+.tbl .est{color:var(--sun-ink)}
+.tbl .hi td{background:var(--warn-soft)}
+.tbl tfoot td{font-weight:800;border-top:2px solid var(--ink);border-bottom:0;padding-block:14px}
+
+/* log */
+.log{list-style:none;margin:-6px 0;padding:0;display:flex;flex-direction:column}
+.log li{display:grid;grid-template-columns:auto 1fr;gap:12px;padding:11px 0;border-top:1px solid var(--line);font-size:16px}
+.log li:first-child{border-top:0}
+.log time{font-family:var(--f-mono);font-size:15px;color:var(--muted)}
+
+/* histórico */
+.bars{display:flex;flex-direction:column;gap:18px}
+.bar-row{display:grid;grid-template-columns:150px 1fr 76px;gap:12px;align-items:center;font-size:17px}
+.track{height:16px;border-radius:99px;background:var(--surface2);overflow:hidden}
+.fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--sun2),var(--sun))}
+.fill.cold{background:var(--cold)}
+.fill.slow{background:var(--crit)}
+.note{font-size:16px;color:var(--muted);border-left:4px solid var(--sun2);padding:2px 0 2px 14px}
+.wrow{display:flex;gap:18px;align-items:center;flex-wrap:wrap;justify-content:center}
+.wrow .side{flex:1;min-width:210px;display:flex;flex-direction:column;gap:14px}
+.prog small{display:flex;justify-content:space-between;font-size:15px;color:var(--muted);margin-bottom:5px}
+
+.foot{font-size:14px;color:var(--muted);text-align:center;padding-top:22px}
+
+@media (max-width:1000px){
+  .g8,.g4,.g6,.g5,.g7{grid-column:span 12}
+}
+@media (max-width:760px){
+  .nums{grid-template-columns:repeat(2,minmax(0,1fr));gap:18px 0}
+  .num:nth-child(3){border-left:0;padding-left:0}
+}
+@media (max-width:520px){
+  .titlebar h1{font-size:28px}
+  .num .v{font-size:38px}
+  .bar-row{grid-template-columns:104px 1fr 66px;font-size:16px}
+  .lcd{font-size:16px}
+  .nav{width:100%} .nav button{flex:1;padding:0 4px;font-size:15px;min-height:52px}
+  .clock{display:none}
+  .right{margin-left:0}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+
+<header class="appbar gut">
+  <div class="in">
+    <div class="brand">
+      <svg width="34" height="34" viewBox="0 0 46 46" aria-hidden="true">
+        <defs><linearGradient id="sg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFB020"/><stop offset="1" stop-color="#F2622B"/></linearGradient></defs>
+        <circle cx="23" cy="23" r="22" style="fill:var(--ink)"/>
+        <path d="M8 29a15 15 0 0 1 30 0z" fill="url(#sg)"/>
+        <rect x="6" y="32" width="34" height="2.4" rx="1.2" fill="#FFB020" opacity=".9"/>
+        <rect x="11" y="36.5" width="24" height="2.4" rx="1.2" fill="#F2622B" opacity=".9"/>
+      </svg>
+      <b>PDS Regenera</b><span>Pôr do Sol</span>
+    </div>
+    <nav class="nav" role="tablist" aria-label="Telas">
+      <button role="tab" id="t-agora" data-tab="agora" aria-selected="true">Agora</button>
+      <button role="tab" id="t-historico" data-tab="historico" aria-selected="false">Histórico</button>
+    </nav>
+    <div class="right"><span class="clock" id="clock"></span><button class="tbtn" id="theme-btn" type="button"></button></div>
+  </div>
+</header>
+
+<div class="gut">
+<div class="in">
+  <div class="titlebar">
+    <h1 id="h1">Painel do Pôr do Sol</h1>
+    <div class="tools">
+      <span class="chip">Simulação com números de exemplo</span>
+      <button class="btn" id="btn-reset">Reiniciar demonstração</button>
+    </div>
+  </div>
+
+  <!-- AGORA -->
+  <main id="v-agora" class="view board" role="tabpanel" aria-labelledby="t-agora">
+
+    <section class="gadget g5">
+      <div class="gh">Equipamentos <small>toque para ver</small></div>
+      <div class="gb"><div class="eqlist" id="tiles"></div></div>
+    </section>
+
+    <section class="gadget g7" aria-live="polite">
+      <div class="gh">Semáforo <small id="p-small"></small></div>
+      <div class="gb">
+        <div class="pname"><h3 id="p-nome"></h3><span class="pill" id="p-pill"></span></div>
+        <div class="sema"><div class="light" id="p-light"><b></b><b></b></div><div class="lcd" id="p-lcd"></div></div>
+        <div class="stats" id="p-stats"></div>
+        <div class="demo"><span class="lab">Para testar na demonstração</span><div class="actions" id="p-actions"></div></div>
+      </div>
+    </section>
+
+    <section class="gadget g8">
+      <div class="gh">Consumo por hora <small>em kW, exemplo</small></div>
+      <div class="gb">
+        <svg class="chart" id="chart" viewBox="0 0 600 300" role="img" aria-label="Gráfico de barras do consumo por hora, das 17h à meia-noite"></svg>
+        <div class="legend" id="legend"></div>
+      </div>
+      <div class="gf"><span>O consumo sobe com o movimento do bar.</span><b>Exemplo</b></div>
+    </section>
+
+    <section class="gadget g4">
+      <div class="gh">O que aconteceu</div>
+      <div class="gb"><ul class="log" id="p-log"></ul></div>
+    </section>
+  </main>
+
+  <!-- HISTÓRICO -->
+  <main id="v-historico" class="view board" role="tabpanel" aria-labelledby="t-historico" hidden style="display:none">
+    <section class="gadget g6">
+      <div class="gh">Tempo para voltar ao frio <small>depois de abrir a porta</small></div>
+      <div class="gb">
+        <div class="bars" id="rec-bars"></div>
+        <p class="note">Quem demora mais pode estar com a borracha da porta gasta ou com poeira atrás. Vale mandar olhar.</p>
+      </div>
+      <div class="gf"><span>Em minutos</span><b>Exemplo</b></div>
+    </section>
+    <section class="gadget g6">
+      <div class="gh">Água reaproveitada <small>meta: 1.000 litros por dia</small></div>
+      <div class="gb">
+        <div class="wrow">
+          <svg class="donut" viewBox="0 0 200 200" width="200" height="200" role="img" aria-label="640 litros de 1.000 reaproveitados hoje" id="donut" style="max-width:100%;height:auto"></svg>
+          <div class="side">
+            <div class="prog"><small><span>Guardada</span><b class="mono">320 / 500 L</b></small><div class="track"><div class="fill cold" style="width:64%"></div></div></div>
+            <div class="prog"><small><span>Limpa</span><b class="mono">210 / 500 L</b></small><div class="track"><div class="fill cold" style="width:42%"></div></div></div>
+          </div>
+        </div>
+        <p class="note">Serve para lavar piso e calçada e regar plantas. Nunca para copos, gelo ou comida.</p>
+      </div>
+      <div class="gf"><span>Reúso em rede separada</span><b>Exemplo</b></div>
+    </section>
+
+    <section class="gadget g12">
+      <div class="gh">Consumo mensal de energia <small>últimos 12 meses</small></div>
+      <div class="gb">
+        <div class="tbl-wrap"><table class="tbl" id="tbl"></table></div>
+      </div>
+      <div class="gf"><span>Valores de exemplo. Serão trocados pelos das 12 últimas faturas.</span><b>Exemplo</b></div>
+    </section>
+  </main>
+
+  <p class="foot">Além do Horizonte · Marcus e Thay</p>
+</div>
+</div>
+
+<script>
+(function(){
+  var INFO={
+    ok:{label:'Pode abrir',l1:'FREEZER LIBERADO',l2:'PODE ABRIR',red:false,hint:'Tudo certo. Pode abrir e repor à vontade.'},
+    rec:{label:'Mantenha fechado',l1:'MANTENHA FECHADO',l2:'RECUPERANDO',red:true,hint:'Vermelho aqui não quer dizer quebrado. O equipamento está voltando ao frio. Evite abrir por enquanto.'},
+    crit:{label:'Veja agora',l1:'TEMP. CRITICA',l2:'VERIFIQUE AGORA',red:true,hint:'A temperatura está alta e não melhora. Peça para alguém olhar o equipamento agora.'},
+    nosig:{label:'Veja agora',l1:'SENSOR SEM SINAL',l2:'VERIFIQUE AGORA',red:true,hint:'O aparelho que mede a temperatura parou de responder. Peça para alguém olhar o equipamento.'}
+  };
+  var SHORT={ok:'Pode abrir',rec:'Mantenha fechado',crit:'Temperatura alta',nosig:'Sem sinal'};
+  var BASE=[
+    {id:'C1',nome:'Cervejeira 1',temp:3.1,kw:0.42,rec:9},
+    {id:'C2',nome:'Cervejeira 2',temp:6.4,kw:0.55,rec:31},
+    {id:'G1',nome:'Freezer de gelo',temp:-18.2,kw:0.85,rec:18},
+    {id:'E1',nome:'Expositor',temp:4.0,kw:0.30,rec:12}
+  ];
+  var BASE_TEMP={C1:3.1,C2:3.4,G1:-18.2,E1:4.0};
+  var MOON='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>';
+  var SUN='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>';
+  var theme='light';
+  try{ if(localStorage.getItem('pds-theme')==='dark') theme='dark'; }catch(e){}
+  function applyTheme(){
+    document.documentElement.setAttribute('data-theme',theme);
+    $('theme-btn').innerHTML=theme==='dark'?SUN+'<span>Modo claro</span>':MOON+'<span>Modo escuro</span>';
+    $('theme-btn').setAttribute('aria-label',theme==='dark'?'Trocar para o modo claro':'Trocar para o modo escuro');
+  }
+  $('theme-btn').addEventListener('click',function(){
+    theme=theme==='dark'?'light':'dark'; applyTheme();
+    try{localStorage.setItem('pds-theme',theme)}catch(e){}
+  });
+  applyTheme();
+
+  var EQ, sel, LOG;
+  function hm(offMin){var d=new Date(Date.now()+(offMin||0)*60000);return d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}
+  function $(id){return document.getElementById(id)}
+  function fmt(n){return n==null?'—':n.toFixed(1).replace('.',',')}
+  function cur(){return EQ.filter(function(e){return e.id===sel})[0]}
+  function addLog(m){LOG.unshift({t:hm(0),m:m}); if(LOG.length>5)LOG.pop()}
+  function init(){
+    EQ=BASE.map(function(e){return Object.assign({estado:'ok',porta:false,ack:false},e)});
+    EQ[1].estado='rec'; EQ[1].porta=true; EQ[1].temp=6.4;
+    sel='C2';
+    LOG=[
+      {t:hm(-14),m:'<b>Cervejeira 2</b>: porta ficou aberta. Voltando ao frio.'},
+      {t:hm(-52),m:'<b>Freezer de gelo</b>: voltou ao normal.'},
+      {t:hm(-96),m:'Equipe repôs as bebidas antes do movimento.'}
+    ];
+  }
+
+  function render(){
+    $('tiles').innerHTML=EQ.map(function(e){
+      return '<button class="eqrow s-'+e.estado+'" data-id="'+e.id+'" aria-pressed="'+(e.id===sel)+'"><span class="n">'+e.nome+'</span><span class="s">'+SHORT[e.estado]+'</span><span class="t">'+(e.estado==='nosig'?'—':fmt(e.temp))+'<u> °C</u></span></button>';
+    }).join('');
+
+    var e=cur(), s=INFO[e.estado];
+    $('p-small').textContent=e.id;
+    $('p-nome').textContent=e.nome;
+    var pill=$('p-pill'); pill.textContent=s.label; pill.className='pill '+(s.red?'bad':'ok');
+    $('p-light').className='light '+(s.red?'r':'g');
+    var lcd=$('p-lcd'); lcd.className='lcd'+(s.red?' r':''); lcd.innerHTML='<span>'+s.l1+'</span><span>'+s.l2+'</span>';
+    $('p-stats').innerHTML=
+      '<div><small>Temperatura</small><b>'+(e.estado==='nosig'?'—':fmt(e.temp)+' °C')+'</b></div>'+
+      '<div><small>Porta</small><b>'+(e.porta?'aberta':'fechada')+'</b></div>';
+    var a='';
+    a+='<button class="btn" data-act="porta">Abrir a porta</button>';
+    a+='<button class="btn" data-act="crit">Temperatura alta</button>';
+    a+='<button class="btn" data-act="nosig">Sensor sem sinal</button>';
+    a+='<button class="btn" data-act="reset"'+(e.estado==='ok'?' disabled':'')+'>Voltar ao normal</button>';
+    $('p-actions').innerHTML=a;
+    $('p-log').innerHTML=LOG.map(function(l){return '<li><time>'+l.t+'</time><span>'+l.m+'</span></li>'}).join('');
+
+    var mx=Math.max.apply(null,EQ.map(function(x){return x.rec}));
+    $('rec-bars').innerHTML=EQ.map(function(x){
+      var slow=x.rec>=25;
+      return '<div class="bar-row"><span>'+x.nome+'</span><div class="track"><div class="fill'+(slow?' slow':'')+'" style="width:'+Math.round(x.rec/mx*100)+'%"></div></div><span class="mono">'+x.rec+' min</span></div>';
+    }).join('');
+  }
+
+  // gráfico de consumo (estático, exemplo): kW por hora, empilhado por equipamento
+  (function(){
+    var hours=['17h','18h','19h','20h','21h','22h','23h'];
+    var data={
+      C1:[.40,.41,.43,.46,.48,.47,.44],
+      C2:[.50,.52,.56,.62,.66,.63,.58],
+      G1:[.80,.82,.86,.92,.95,.93,.88],
+      E1:[.28,.29,.31,.34,.36,.35,.32]
+    };
+    var cols={C1:'var(--sun)',C2:'var(--sun2)',G1:'var(--cold)',E1:'var(--s4)'};
+    var x0=54,x1=590,y0=262,y1=18,max=2.5,bw=44;
+    function Y(v){return y0-(v/max)*(y0-y1)}
+    var s='';
+    for(var t=0;t<=2.5;t+=0.5){
+      s+='<line class="gl" x1="'+x0+'" x2="'+x1+'" y1="'+Y(t)+'" y2="'+Y(t)+'"/>'+
+         '<text class="ax" x="'+(x0-10)+'" y="'+(Y(t)+5)+'" text-anchor="end">'+t.toFixed(1).replace('.',',')+'</text>';
+    }
+    var step=(x1-x0)/hours.length;
+    hours.forEach(function(h,i){
+      var cx=x0+step*i+step/2, acc=0;
+      ['G1','C2','C1','E1'].forEach(function(id){
+        var v=data[id][i], top=Y(acc+v), bot=Y(acc);
+        s+='<rect x="'+(cx-bw/2)+'" y="'+top+'" width="'+bw+'" height="'+Math.max(bot-top-1,0)+'" fill="'+cols[id]+'"/>';
+        acc+=v;
+      });
+      s+='<text class="ax" x="'+cx+'" y="'+(y0+26)+'" text-anchor="middle">'+h+'</text>';
+    });
+    $('chart').innerHTML=s;
+    $('legend').innerHTML=BASE.map(function(b){return '<span><i style="background:'+cols[b.id]+'"></i>'+b.nome+'</span>'}).join('');
+  })();
+
+  // rosca da água (64% da meta)
+  (function(){
+    var r=74,C=2*Math.PI*r,p=0.64;
+    $('donut').innerHTML=
+      '<circle class="trk" cx="100" cy="100" r="'+r+'"/>'+
+      '<circle class="val" cx="100" cy="100" r="'+r+'" style="stroke:var(--cold)" stroke-dasharray="'+(C*p)+' '+C+'" transform="rotate(-90 100 100)"/>'+
+      '<text x="100" y="104" font-family="var(--f-display)" font-weight="800" font-size="38">640</text>'+
+      '<text x="100" y="128" font-size="16" style="fill:var(--muted)">de 1.000 L</text>';
+  })();
+
+
+  // tabela de consumo mensal (exemplo; trocar pelas 12 faturas reais)
+  (function(){
+    var rows=[
+      ['Nov/25',10480,9960],['Dez/25',11050,10620],['Jan/26',11420,11020],['Fev/26',11610,11280],
+      ['Mar/26',11200,10790],['Abr/26',10540,10020],['Mai/26',9870,9380],['Jun/26',9420,8960],
+      ['Jul/26',9310,8870],['Ago/26',9700,9240],['Set/26',10350,9850],['Out/26',10890,10430]
+    ];
+    function n(v){return v.toLocaleString('pt-BR')}
+    function r(v){return 'R$ '+v.toLocaleString('pt-BR')}
+    var maxK=Math.max.apply(null,rows.map(function(x){return x[1]}));
+    var totK=0,totV=0;
+    var body=rows.map(function(x,i){
+      totK+=x[1]; totV+=x[2];
+      var v='—',cls='';
+      if(i>0){var d=(x[1]-rows[i-1][1])/rows[i-1][1]*100; v=(d>=0?'▲ ':'▼ ')+Math.abs(d).toFixed(1).replace('.',',')+'%'; cls=d>=0?'up':'dn'}
+      var hi=x[1]===maxK?' class="hi"':'';
+      return '<tr'+hi+'><td class="m">'+x[0]+'</td>'+
+        '<td class="r"><div class="inl"><i style="width:'+Math.round(x[1]/maxK*90)+'px"></i><span class="num-c">'+n(x[1])+'</span></div></td>'+
+        '<td class="r num-c">'+r(x[2])+'</td>'+
+        '<td class="r '+cls+'">'+v+'</td>'+
+        '<td class="r num-c est">'+r(Math.round(x[2]*0.75))+'</td></tr>';
+    }).join('');
+    $('tbl').innerHTML=
+      '<thead><tr><th>Mês</th><th class="r">Consumo (kWh)</th><th class="r">Valor da conta</th><th class="r">Mudança no consumo</th><th class="r">Com 25% de desconto (estimativa)</th></tr></thead>'+
+      '<tbody>'+body+'</tbody>'+
+      '<tfoot><tr><td>Média por mês</td><td class="r num-c">'+n(Math.round(totK/12))+'</td><td class="r num-c">'+r(Math.round(totV/12))+'</td><td></td><td class="r num-c est">'+r(Math.round(totV/12*0.75))+'</td></tr></tfoot>';
+  })();
+
+  $('tiles').addEventListener('click',function(ev){var b=ev.target.closest('.eqrow');if(b){sel=b.dataset.id;render()}});
+  $('p-actions').addEventListener('click',function(ev){
+    var b=ev.target.closest('button'); if(!b||b.disabled)return;
+    var e=cur(), act=b.dataset.act;
+    if(act==='porta'){e.estado='rec';e.porta=true;e.ack=false;e.temp=BASE_TEMP[e.id]+(e.id==='G1'?3:3.2);addLog('<b>'+e.nome+'</b>: porta aberta. Mantenha fechado.')}
+    if(act==='crit'){e.estado='crit';e.porta=false;e.ack=false;e.temp=BASE_TEMP[e.id]+(e.id==='G1'?9:7);addLog('<b>'+e.nome+'</b>: temperatura alta. Alarme tocando.')}
+    if(act==='nosig'){e.estado='nosig';e.ack=false;addLog('<b>'+e.nome+'</b>: sensor sem sinal. Alarme tocando.')}
+    if(act==='reset'){e.estado='ok';e.porta=false;e.ack=false;e.temp=BASE_TEMP[e.id];addLog('<b>'+e.nome+'</b>: voltou ao normal.')}
+    render();
+  });
+  $('btn-reset').addEventListener('click',function(){init();render()});
+
+  var tabs=['agora','historico'];
+  var TITLES={agora:'Painel do Pôr do Sol',historico:'Histórico'};
+  function show(name){
+    if(tabs.indexOf(name)<0)name='agora';
+    tabs.forEach(function(t){
+      var v=$('v-'+t), on=t===name; v.hidden=!on; v.style.display=on?'grid':'none';
+      $('t-'+t).setAttribute('aria-selected',on?'true':'false');
+    });
+    $('h1').textContent=TITLES[name];
+    $('btn-reset').style.display=name==='agora'?'':'none';
+  }
+  document.querySelector('.nav').addEventListener('click',function(ev){
+    var b=ev.target.closest('button'); if(!b)return;
+    show(b.dataset.tab);
+    try{history.replaceState(null,'','#'+b.dataset.tab)}catch(x){ try{location.hash=b.dataset.tab}catch(y){} }
+  });
+  window.addEventListener('hashchange',function(){show(location.hash.replace('#',''))});
+
+  function tick(){$('clock').textContent=new Date().toLocaleDateString('pt-BR',{weekday:'short',day:'numeric',month:'short'})+' · '+hm(0)}
+  tick(); setInterval(tick,30000);
+
+  init(); render();
+  show(location.hash.replace('#',''));
+})();
+</script>
+
+</body>
+</html>
